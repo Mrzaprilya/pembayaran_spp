@@ -44,6 +44,13 @@ Route::middleware(['admin'])->prefix('admin')->group(function () {
     Route::resource('kelas', KelasController::class);
     Route::resource('spp', SppController::class);
     Route::resource('siswa', AdminSiswaController::class);
+    
+    // Validation routes for AJAX
+    Route::get('siswa/validate-nisn/{nisn}', [AdminSiswaController::class, 'validateNisn'])
+        ->name('siswa.validate.nisn');
+    Route::get('siswa/validate-nis/{nis}', [AdminSiswaController::class, 'validateNis'])
+        ->name('siswa.validate.nis');
+    
     Route::resource('petugas', AdminPetugasController::class);
 
     Route::get('pembayaran', [AdminPembayaranController::class, 'index'])

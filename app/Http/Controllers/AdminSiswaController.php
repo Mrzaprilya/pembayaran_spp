@@ -111,4 +111,18 @@ class AdminSiswaController extends Controller
         return redirect('/admin/siswa')->with('success', 'Data siswa berhasil dihapus!');
     }
     
+    // Validate NISN uniqueness (AJAX)
+    public function validateNisn($nisn)
+    {
+        $exists = Siswa::where('nisn', $nisn)->exists();
+        return response()->json(['exists' => $exists]);
+    }
+    
+    // Validate NIS uniqueness (AJAX)
+    public function validateNis($nis)
+    {
+        $exists = Siswa::where('nis', $nis)->exists();
+        return response()->json(['exists' => $exists]);
+    }
+    
 }

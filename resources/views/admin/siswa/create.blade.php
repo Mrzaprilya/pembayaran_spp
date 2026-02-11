@@ -3,6 +3,21 @@
 @section('title', 'Tambah Siswa')
 
 @section('content')
+<style>
+.is-invalid {
+    border-color: #dc3545 !important;
+}
+.valid-feedback {
+    color: #28a745;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+.invalid-feedback {
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+</style>
 
 <!-- HEADER -->
 <div class="mb-8">
@@ -34,7 +49,7 @@
         </div>
 
         <div class="p-6">
-            <form action="{{ route('siswa.store') }}" method="POST" class="space-y-6">
+            <form action="{{ route('siswa.store') }}" method="POST" class="space-y-6" id="siswaForm">
                 @csrf
 
                 <!-- ERROR VALIDASI -->
@@ -69,15 +84,16 @@
                                 <span class="text-red-500">*</span>
                             </span>
                         </label>
-                        <input type="text" name="nisn" value="{{ old('nisn') }}" 
+                        <input type="text" name="nisn" id="nisn" value="{{ old('nisn') }}" 
                                maxlength="10" minlength="10"
                                pattern="[0-9]{10}"
                                placeholder="Masukkan 10 digit NISN"
-                               oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                               oninput="this.value = this.value.replace(/[^0-9]/g, ''); validateNisn(this.value)"
                                class="w-full px-4 py-2 rounded-lg border border-gray-300 text-gray-900
                                       focus:ring-2 focus:ring-maroon focus:border-maroon
                                       outline-none transition font-mono"
                                required>
+                        <div id="nisn-feedback" class="invalid-feedback"></div>
                         <p class="text-xs text-gray-500 mt-1">Wajib 10 digit angka (contoh: 0034567890)</p>
                     </div>
 
@@ -92,15 +108,16 @@
                                 <span class="text-red-500">*</span>
                             </span>
                         </label>
-                        <input type="text" name="nis" value="{{ old('nis') }}"
+                        <input type="text" name="nis" id="nis" value="{{ old('nis') }}"
                                maxlength="7" minlength="7"
                                pattern="[0-9]{7}"
                                placeholder="Masukkan 7 digit NIS"
-                               oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                               oninput="this.value = this.value.replace(/[^0-9]/g, ''); validateNis(this.value)"
                                class="w-full px-4 py-2 rounded-lg border border-gray-300 text-gray-900
                                       focus:ring-2 focus:ring-maroon focus:border-maroon
                                       outline-none transition font-mono"
                                required>
+                        <div id="nis-feedback" class="invalid-feedback"></div>
                         <p class="text-xs text-gray-500 mt-1">Wajib 7 digit angka (contoh: 1234567)</p>
                     </div>
 
@@ -165,13 +182,29 @@
                                        focus:ring-2 focus:ring-maroon focus:border-maroon
                                        outline-none transition">
                             <option value="">-- Pilih SPP --</option>
-                            @foreach($spp as $sp)
+                            @php
+                                // Get only active SPP records (the latest edited ones)
+                                $activeSpp = [];
+                                foreach($spp as $sp) {
+                                    $key = $sp->tahun . '_' . $sp->kategori;
+                                    // Only keep SPP that is active OR if no active exists for this year/category
+                                    if (!isset($activeSpp[$key])) {
+                                        $activeSpp[$key] = $sp;
+                                    } elseif ($sp->is_active && (!$activeSpp[$key]->is_active || $sp->tanggal_berlaku > $activeSpp[$key]->tanggal_berlaku)) {
+                                        $activeSpp[$key] = $sp;
+                                    }
+                                }
+                            @endphp
+                            @foreach($activeSpp as $sp)
                                 <option value="{{ $sp->id }}" {{ old('spp_id') == $sp->id ? 'selected' : '' }}>
                                     {{ $sp->tahun }} - {{ ucfirst($sp->kategori) }} - Rp {{ number_format($sp->nominal,0,',','.') }}
+                                    @if($sp->tanggal_berlaku && $sp->tanggal_berlaku > now())
+                                        (Berlaku: {{ \Carbon\Carbon::parse($sp->tanggal_berlaku)->format('d/m/Y') }})
+                                    @endif
                                 </option>
                             @endforeach
                         </select>
-                        <p class="text-xs text-gray-500 mt-1">Pilih kategori SPP yang berlaku</p>
+                        <p class="text-xs text-gray-500 mt-1">Pilih kategori SPP yang berlaku (nominal terbaru)</p>
                     </div>
 
                     <!-- ALAMAT -->
@@ -263,5 +296,96 @@
     </div>
 
 </div>
+
+<script>
+let nisnTimeout;
+let nisTimeout;
+
+function validateNisn(value) {
+    const nisnInput = document.getElementById('nisn');
+    const feedback = document.getElementById('nisn-feedback');
+    
+    // Clear previous timeout
+    clearTimeout(nisnTimeout);
+    
+    // Remove previous validation classes
+    nisnInput.classList.remove('is-invalid');
+    feedback.innerHTML = '';
+    
+    // Only validate if exactly 10 digits
+    if (value.length === 10) {
+        nisnTimeout = setTimeout(() => {
+            fetch(`/admin/siswa/validate-nisn/${value}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.exists) {
+                        nisnInput.classList.add('is-invalid');
+                        feedback.innerHTML = 'NISN sudah terdaftar, gunakan NISN yang lain';
+                    } else {
+                        feedback.innerHTML = '<span class="valid-feedback">✓ NISN tersedia</span>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error validating NISN:', error);
+                });
+        }, 500); // Debounce 500ms
+    }
+}
+
+function validateNis(value) {
+    const nisInput = document.getElementById('nis');
+    const feedback = document.getElementById('nis-feedback');
+    
+    // Clear previous timeout
+    clearTimeout(nisTimeout);
+    
+    // Remove previous validation classes
+    nisInput.classList.remove('is-invalid');
+    feedback.innerHTML = '';
+    
+    // Only validate if exactly 7 digits
+    if (value.length === 7) {
+        nisTimeout = setTimeout(() => {
+            fetch(`/admin/siswa/validate-nis/${value}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.exists) {
+                        nisInput.classList.add('is-invalid');
+                        feedback.innerHTML = 'NIS sudah terdaftar, gunakan NIS yang lain';
+                    } else {
+                        feedback.innerHTML = '<span class="valid-feedback">✓ NIS tersedia</span>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error validating NIS:', error);
+                });
+        }, 500); // Debounce 500ms
+    }
+}
+
+// Prevent form submission if validation fails
+document.getElementById('siswaForm').addEventListener('submit', function(e) {
+    const nisnInput = document.getElementById('nisn');
+    const nisInput = document.getElementById('nis');
+    const nisnFeedback = document.getElementById('nisn-feedback');
+    const nisFeedback = document.getElementById('nis-feedback');
+    
+    // Check if NISN is invalid
+    if (nisnInput.classList.contains('is-invalid') || nisnFeedback.innerHTML.includes('sudah terdaftar')) {
+        e.preventDefault();
+        alert('Perbaiki kesalahan NISN sebelum menyimpan data');
+        nisnInput.focus();
+        return false;
+    }
+    
+    // Check if NIS is invalid
+    if (nisInput.classList.contains('is-invalid') || nisFeedback.innerHTML.includes('sudah terdaftar')) {
+        e.preventDefault();
+        alert('Perbaiki kesalahan NIS sebelum menyimpan data');
+        nisInput.focus();
+        return false;
+    }
+});
+</script>
 
 @endsection
