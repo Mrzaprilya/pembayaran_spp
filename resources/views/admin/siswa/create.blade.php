@@ -69,13 +69,16 @@
                                 <span class="text-red-500">*</span>
                             </span>
                         </label>
-                        <input type="text" name="nisn" value="{{ old('nisn') }}" maxlength="10"
+                        <input type="text" name="nisn" value="{{ old('nisn') }}" 
+                               maxlength="10" minlength="10"
+                               pattern="[0-9]{10}"
                                placeholder="Masukkan 10 digit NISN"
+                               oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                                class="w-full px-4 py-2 rounded-lg border border-gray-300 text-gray-900
                                       focus:ring-2 focus:ring-maroon focus:border-maroon
                                       outline-none transition font-mono"
                                required>
-                        <p class="text-xs text-gray-500 mt-1">Nomor Induk Siswa Nasional (10 digit)</p>
+                        <p class="text-xs text-gray-500 mt-1">Wajib 10 digit angka (contoh: 0034567890)</p>
                     </div>
 
                     <!-- NIS -->
@@ -90,12 +93,15 @@
                             </span>
                         </label>
                         <input type="text" name="nis" value="{{ old('nis') }}"
-                               placeholder="Masukkan NIS sekolah"
+                               maxlength="7" minlength="7"
+                               pattern="[0-9]{7}"
+                               placeholder="Masukkan 7 digit NIS"
+                               oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                                class="w-full px-4 py-2 rounded-lg border border-gray-300 text-gray-900
                                       focus:ring-2 focus:ring-maroon focus:border-maroon
                                       outline-none transition font-mono"
                                required>
-                        <p class="text-xs text-gray-500 mt-1">Nomor Induk Sekolah</p>
+                        <p class="text-xs text-gray-500 mt-1">Wajib 7 digit angka (contoh: 1234567)</p>
                     </div>
 
                     <!-- NAMA -->
@@ -200,12 +206,15 @@
                             </span>
                         </label>
                         <input type="text" name="no_telp" value="{{ old('no_telp') }}"
-                               placeholder="Contoh: 08123456789"
+                               maxlength="15" minlength="12"
+                               pattern="[0-9]{12,15}"
+                               placeholder="Contoh: 081234567890"
+                               oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                                class="w-full px-4 py-2 rounded-lg border border-gray-300 text-gray-900
                                       focus:ring-2 focus:ring-maroon focus:border-maroon
                                       outline-none transition font-mono"
                                required>
-                        <p class="text-xs text-gray-500 mt-1">Nomor telepon orang tua/wali siswa</p>
+                        <p class="text-xs text-gray-500 mt-1">Wajib 12-15 digit angka (contoh: 081234567890)</p>
                     </div>
 
                 </div>
@@ -217,12 +226,13 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                         <div>
-                            <p class="text-sm text-blue-800 font-medium">Informasi:</p>
+                            <p class="text-sm text-blue-800 font-medium">Informasi Validasi:</p>
                             <ul class="text-sm text-blue-700 mt-1 space-y-1">
-                                <li>• Pastikan semua data yang diisi sudah benar dan valid</li>
-                                <li>• NISN harus 10 digit sesuai data resmi</li>
+                                <li>• <strong>NISN:</strong> Wajib 10 digit angka (contoh: 0034567890)</li>
+                                <li>• <strong>NIS:</strong> Wajib 7 digit angka (contoh: 1234567)</li>
+                                <li>• <strong>No. Telepon:</strong> Wajib 12-15 digit angka (contoh: 081234567890)</li>
+                                <li>• Hanya angka yang diperbolehkan, huruf akan otomatis dihapus</li>
                                 <li>• Data siswa dapat diedit setelah disimpan</li>
-                                <li>• Pilih kelas dan SPP yang sesuai dengan kondisi siswa</li>
                             </ul>
                         </div>
                     </div>
